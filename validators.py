@@ -26,3 +26,7 @@ class BookValidator(BaseModel):
     price: int
     quantity: int
     user_id: int
+
+
+class CartValidator(BaseModel):
+    user_id: int
