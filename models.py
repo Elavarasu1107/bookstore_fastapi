@@ -61,8 +61,8 @@ class Cart(Base):
     __tablename__ = "cart"
 
     id = Column(BigInteger, primary_key=True, index=True)
-    total_quantity = Column(Integer)
-    total_price = Column(Integer)
+    total_quantity = Column(Integer, default=0)
+    total_price = Column(Integer, default=0)
     status = Column(Boolean, default=False)
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cart")
