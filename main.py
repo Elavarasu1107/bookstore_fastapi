@@ -1,13 +1,8 @@
-import logging
-
 from fastapi import Depends, FastAPI, Request, Response, status
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
 
 from event_emitter import ee
-from models import Base, Book, Cart, CartItem, User
-from settings import settings
-from utils import JWT, TokenRole, verify_superuser, verify_user
+from models import Book, Cart, CartItem, User
+from utils import JWT, TokenRole, logger, verify_superuser, verify_user
 from validators import (
     BookIdValidator,
     BookValidator,
@@ -17,14 +12,7 @@ from validators import (
     UserValidator,
 )
 
-logging.basicConfig(filename='book_store.log', encoding='utf-8', level=logging.DEBUG,
-                    format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-logger = logging.getLogger()
 app = FastAPI()
-engine = create_engine(settings.database_url)
-Base.metadata.create_all(engine)
-
-
 
 @app.post("/user/register/", status_code=status.HTTP_201_CREATED)
 def user_register(payload: UserValidator, response: Response):

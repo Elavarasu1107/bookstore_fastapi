@@ -38,8 +38,7 @@ class Manager:
         self.session.commit()
 
     def update(self, **payload):
-        # instance = self.get(id=payload.get("id"))
-        instance = self.get(id=self.model.id)
+        instance = self.get(id=payload.get("id"))
         for k, v in payload.items():
             setattr(instance, k, v)
         self.session.commit()
@@ -47,8 +46,7 @@ class Manager:
         return instance
 
     def delete(self, **payload):
-        instance = self.session.query(self.model).filter_by(**payload).one()
-        # instance = self.get(id=self.model.id)
+        instance = self.get(id=payload.get("id"))
         self.session.delete(instance)
         self.session.commit()
 
