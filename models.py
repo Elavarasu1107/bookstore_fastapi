@@ -1,3 +1,5 @@
+from os import environ
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -6,10 +8,72 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    create_engine,
+    select,
 )
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import Session, declarative_base, relationship
+
+from settings import settings
 
 Base = declarative_base()
+engine = create_engine(settings.database_url)
+Base.metadata.create_all(engine)
+
+
+class Manager:
+    def __init__(self) -> None:
+        self.model = None
+        self.session = Session(engine)
+
+
+    def create(self, **payload):
+        instance = self.model(**payload)
+        self.session.add(instance)
+        self.session.commit()
+        self.session.refresh(instance)
+        return instance
+
+    def bulk_create(self, *instances):
+        self.session.add_all(*instances)
+        self.session.commit()
+
+    def update(self, **payload):
+        # instance = self.get(id=payload.get("id"))
+        instance = self.get(id=self.model.id)
+        for k, v in payload.items():
+            setattr(instance, k, v)
+        self.session.commit()
+        self.session.refresh(instance)
+        return instance
+
+    def delete(self, **payload):
+        instance = self.session.query(self.model).filter_by(**payload).one()
+        # instance = self.get(id=self.model.id)
+        self.session.delete(instance)
+        self.session.commit()
+
+    def get(self, **payload):
+        instance = self.session.query(self.model).filter_by(**payload).one()
+        return instance
+
+    def get_or_none(self, **payload):
+        instance = self.session.query(self.model).filter_by(**payload).one_or_none()
+        return instance
+
+    def filter(self, **payload):
+        instance_list = self.session.query(self.model).filter_by(**payload).all()
+        return instance_list
+
+    def all(self):
+        instance_list = self.session.query(self.model).all()
+        return instance_list
+
+    # def remove(self, **payload):
+    #     instance = self.get(**payload)
+    #     print(instance)
+
+    def __set_name__(self, owner, name):
+        self.model = owner
 
 class User(Base):
     __tablename__ = "user"
@@ -26,6 +90,7 @@ class User(Base):
     book = relationship("Book", back_populates="user")
     cart = relationship("Cart", back_populates="user")
     cartitem = relationship("CartItem", back_populates="user")
+    objects = Manager()
 
     def __repr__(self):
         return f"User(id={self.id!r})"
@@ -47,6 +112,7 @@ class Book(Base):
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="book")
     cartitem = relationship("CartItem", back_populates="book")
+    objects = Manager()
 
     def __repr__(self):
         return f"Book(id={self.id!r})"
@@ -66,10 +132,11 @@ class Cart(Base):
     status = Column(Boolean, default=False)
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cart")
-    cartitem = relationship("CartItem", back_populates="cart")
+    cartitem = relationship("CartItem", back_populates="cart", cascade="all,delete")
+    objects = Manager()
 
     def __repr__(self):
-        return f"Book(id={self.id!r})"
+        return f"Cart(id={self.id!r})"
 
 
     def to_dict(self):
@@ -82,15 +149,17 @@ class CartItem(Base):
 
     id = Column(BigInteger, primary_key=True, index=True)
     price = Column(Integer)
+    quantity = Column(Integer)
     book_id = Column(BigInteger, ForeignKey("book.id", ondelete="CASCADE"), nullable=False)
     book = relationship("Book", back_populates="cartitem")
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cartitem")
     cart_id = Column(BigInteger, ForeignKey("cart.id", ondelete="CASCADE"), nullable=False)
     cart = relationship("Cart", back_populates="cartitem")
+    objects = Manager()
 
     def __repr__(self):
-        return f"Book(id={self.id!r})"
+        return f"CartItem(id={self.id!r})"
 
 
     def to_dict(self):

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr
 
 
-class UserIdValidator(BaseModel):
-    user_id: int
+class BookIdValidator(BaseModel):
+    id: int
 
 class UserValidator(BaseModel):
     username: str
@@ -10,7 +10,7 @@ class UserValidator(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
-    phone: int
+    phone: int 
     location: str
     is_superuser: bool|None= False
 
@@ -21,12 +21,19 @@ class UserLoginValidator(BaseModel):
 
 
 class BookValidator(BaseModel):
+    id: int
     author: str
     title: str
     price: int
     quantity: int
-    user_id: int
+    user_id: int|None
 
 
 class CartValidator(BaseModel):
-    user_id: int
+    id: int|None
+    user_id: int|None
+    book_id: int
+    quantity: int
+
+class CartIdValidator(BaseModel):
+    id: int
