@@ -1,11 +1,14 @@
 import logging
+from datetime import datetime, timedelta
 from enum import Enum
-from os import environ
+from functools import wraps
 
 import jwt
-from dotenv import load_dotenv
+from fastapi import HTTPException, Request, Response, status
 
-load_dotenv()
+from models import User
+from settings import settings
+
 logging.basicConfig(filename='book_store.log', encoding='utf-8', level=logging.DEBUG,
                     format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger = logging.getLogger()
@@ -29,10 +32,10 @@ class JWT:
                 payload.update(role=TokenRole.default.value)
             if not isinstance(payload, dict):
                 raise Exception("Payload should be in dict")
-            payload.update(exp=environ.get("TOKEN_EXPIRE_MINUTES"))
+            payload.update(exp=datetime.utcnow() + timedelta(minutes=60))
             if exp:
                 payload.update({'exp': exp})
-            return jwt.encode(payload, environ.get("JWT_SECRET_KEY"), algorithm=environ.get("ALGORITHM"))
+            return jwt.encode(payload, settings.jwt_key, algorithm=settings.algorithm)
         except Exception as ex:
             logger.exception(ex)
 
@@ -41,8 +44,35 @@ class JWT:
         This method return decoded data from the token
         """
         try:
-            return jwt.decode(token, environ.get("JWT_SECRET_KEY"), algorithms=[environ.get("ALGORITHM")])
-        except jwt.PyJWTError as ex:
-            raise Exception(ex)
+            payload = jwt.decode(token, settings.jwt_key, algorithms=[settings.algorithm])
+            return payload
+        except jwt.exceptions.ExpiredSignatureError:
+            raise HTTPException(detail='Token Expired', status_code=status.HTTP_406_NOT_ACCEPTABLE)
+        except jwt.exceptions.InvalidTokenError:
+            raise HTTPException(detail='Invalid Token', status_code=status.HTTP_403_FORBIDDEN)
         except Exception as ex:
             logger.exception(ex)
+
+
+def get_user(request):
+    token = request.headers.get("token")
+    if not token:
+        raise HTTPException(detail='Auth token required', status_code=status.HTTP_404_NOT_FOUND)
+    decode = JWT().decode(token)
+    if decode.get('role') != TokenRole.auth.value:
+        raise HTTPException(detail='Invalid Token Role', status_code=status.HTTP_406_NOT_ACCEPTABLE)
+    user = User.objects.get(id=decode.get('user_id'))
+    if not user:
+        raise HTTPException(detail='User not found', status_code=404)
+    return user
+
+
+
+def verify_user(request: Request)-> User:
+        return get_user(request)
+
+def verify_superuser(request: Request)-> User:
+    user = get_user(request)
+    if not user.is_superuser:
+        raise HTTPException(detail='User not authorized', status_code=404)
+    return user
