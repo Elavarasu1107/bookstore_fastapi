@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
 
-class BookIdValidator(BaseModel):
+class IdValidator(BaseModel):
     id: int
 
 class UserValidator(BaseModel):

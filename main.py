@@ -1,13 +1,13 @@
 from fastapi import Depends, FastAPI, Request, Response, status
 
 from event_emitter import ee
-from models import Book, Cart, CartItem, User
+from models import Book, Cart, CartItem, Order, OrderItem, User
 from utils import JWT, TokenRole, logger, verify_superuser, verify_user
 from validators import (
-    BookIdValidator,
     BookValidator,
     CartIdValidator,
     CartValidator,
+    IdValidator,
     UserLoginValidator,
     UserValidator,
 )
@@ -79,7 +79,7 @@ def update_note(payload: BookValidator, response: Response, user: User=Depends(v
 
 
 @app.delete('/book/delete/', status_code=status.HTTP_204_NO_CONTENT)
-def delete_note(payload: BookIdValidator, response: Response, user: User=Depends(verify_superuser)):
+def delete_note(payload: IdValidator, response: Response, user: User=Depends(verify_superuser)):
     try:
         payload.user_id = user.id
         Book.objects.delete(**payload.dict())
@@ -123,7 +123,7 @@ def get_cart(request:Request, response: Response, user: User=Depends(verify_user
 @app.put("/cart/update/", status_code=status.HTTP_201_CREATED)
 def update_cart(request:Request, response: Response, payload: CartValidator, user: User=Depends(verify_user)):
     try:
-        cart = Cart.objects.get(id=payload.id, user_id=user.id)
+        cart = Cart.objects.get(id=payload.id, user_id=user.id, status=False)
         book = Book.objects.get(id=payload.book_id)
         cartitem = CartItem.objects.filter(cart_id=cart.id, user_id=user.id, book_id=payload.book_id)
         count = payload.quantity - len(cartitem)
@@ -140,6 +140,45 @@ def delete_cart(request:Request, response: Response, payload: CartIdValidator, u
     try:
         Cart.objects.delete(id=payload.id, user_id=user.id)
         return {"message": "Cart Deleted", "status": 204, "data": {}}
+    except Exception as ex:
+        logger.exception(ex)
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message": str(ex), "status": 400, "data": {}}
+
+@app.post("/order/create/", status_code=status.HTTP_201_CREATED)
+def create_order(request:Request, response: Response, payload: CartIdValidator, user: User=Depends(verify_user)):
+    try:
+        cart = Cart.objects.get_or_none(id=payload.id, user_id=user.id, status=False)
+        if cart:
+            books = CartItem.objects.filter(cart_id=cart.id, user_id=user.id)
+            book_list = []
+            for book in books:
+                book_list.append(book.book_id)
+            order = Order.objects.create(cart_id=cart.id, user_id=user.id)
+            data = {"book_list": book_list, "order_id": order.id, "quantity": len(book_list), "user_id": user.id}
+            ee.emit("add_order", data)
+            order.objects.update(id=order.id, total_quantity=cart.total_quantity, total_price=cart.total_price)
+            cart.objects.update(id=cart.id, status=True)
+            return {"message": "Order placed", "status": 201, "data": order.to_dict()}
+        return {"message": "Order already placed", "status": 201, "data": {}}
+    except Exception as ex:
+        logger.exception(ex)
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message": str(ex), "status": 400, "data": {}}
+    
+@app.get("/order/get/", status_code=status.HTTP_200_OK)
+def create_order(request:Request, response: Response, payload: CartIdValidator, user: User=Depends(verify_user)):
+    try:
+        pass
+    except Exception as ex:
+        logger.exception(ex)
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message": str(ex), "status": 400, "data": {}}
+
+@app.delete("/order/delete/", status_code=status.HTTP_204_NO_CONTENT)
+def create_order(request:Request, response: Response, payload: CartIdValidator, user: User=Depends(verify_user)):
+    try:
+        pass
     except Exception as ex:
         logger.exception(ex)
         response.status_code = status.HTTP_400_BAD_REQUEST

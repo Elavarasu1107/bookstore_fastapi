@@ -1,6 +1,6 @@
 from pyee.base import EventEmitter
 
-from models import Book, Cart, CartItem, User
+from models import Book, Cart, CartItem, Order, OrderItem, User
 from utils import logger
 
 ee = EventEmitter()
@@ -42,5 +42,18 @@ def update_cart(cart, user, book, cart_item, count):
                 total_price += item.price
             total_quantity = cart.total_quantity + count
             cart.objects.update(id=cart.id, total_price=total_price, total_quantity=total_quantity)
+    except Exception as ex:
+        ee.emit('error', ex)
+
+
+@ee.on("add_order")
+def add_order(data):
+    try:
+        order_items_data =[]
+        books_id = data.get("book_list")
+        for i in range(data.get("quantity")):
+            book = Book.objects.get(id=books_id[i])
+            order_items_data.append(OrderItem(user_id=data.get("user_id"), book_id=book.id, order_id=data.get("order_id")))
+        OrderItem.objects.bulk_create(order_items_data)
     except Exception as ex:
         ee.emit('error', ex)
