@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from pyee.base import EventEmitter
 
 from models import Book, Cart, CartItem, Order, OrderItem, User
@@ -8,6 +9,7 @@ ee = EventEmitter()
 @ee.on('error')
 def errors(ex):
     logger.exception(ex)
+    raise HTTPException(detail=str(ex), status_code=status.HTTP_400_BAD_REQUEST)
 
 @ee.on("add_cart")
 def add_cart(payload, user, book, cart):
