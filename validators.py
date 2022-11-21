@@ -37,3 +37,10 @@ class CartValidator(BaseModel):
 
 class CartIdValidator(BaseModel):
     id: int
+
+
+class OrderItemOutput(BaseModel):
+    id: int
+
+    class Config:
+        orm_mode = True

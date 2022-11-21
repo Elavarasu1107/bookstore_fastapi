@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import Depends, FastAPI, Request, Response, status
 
 from event_emitter import ee
@@ -8,6 +10,7 @@ from validators import (
     CartIdValidator,
     CartValidator,
     IdValidator,
+    OrderItemOutput,
     UserLoginValidator,
     UserValidator,
 )
@@ -30,7 +33,7 @@ def user_register(payload: UserValidator, response: Response):
 @app.post('/user/login/', status_code=status.HTTP_202_ACCEPTED)
 def user_login(payload: UserLoginValidator, response: Response):
     try:
-        user = User.objects.get(**payload.dict())
+        user = User.objects.get_or_none(**payload.dict())
         if user:
             token = JWT().encode({"user_id": user.id, "role": TokenRole.auth.value})
             return {"message": "Login Successful", "status": 202, "data": token}
@@ -81,7 +84,7 @@ def update_note(payload: BookValidator, response: Response, user: User=Depends(v
 @app.delete('/book/delete/', status_code=status.HTTP_204_NO_CONTENT)
 def delete_note(payload: IdValidator, response: Response, user: User=Depends(verify_superuser)):
     try:
-        payload.user_id = user.id
+        payload.id = user.id
         Book.objects.delete(**payload.dict())
         return {"message": "Book Deleted", "status": 204, "data":{}}
     except Exception as ex:
@@ -166,19 +169,22 @@ def create_order(request:Request, response: Response, payload: CartIdValidator, 
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message": str(ex), "status": 400, "data": {}}
     
-@app.get("/order/get/", status_code=status.HTTP_200_OK)
-def create_order(request:Request, response: Response, payload: CartIdValidator, user: User=Depends(verify_user)):
+@app.get("/order/get/", status_code=status.HTTP_200_OK, response_model=list[OrderItemOutput]|dict[str,Any])
+def create_order(request:Request, response: Response, user: User=Depends(verify_user)):
     try:
-        pass
+        order = Order.objects.get_or_none(user_id=user.id)
+        orderitems = OrderItem.objects.filter(user_id=user.id, order_id=order.id)
+        return orderitems
     except Exception as ex:
         logger.exception(ex)
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message": str(ex), "status": 400, "data": {}}
 
 @app.delete("/order/delete/", status_code=status.HTTP_204_NO_CONTENT)
-def create_order(request:Request, response: Response, payload: CartIdValidator, user: User=Depends(verify_user)):
+def create_order(request:Request, response: Response, payload: IdValidator, user: User=Depends(verify_user)):
     try:
-        pass
+        Order.objects.delete(id=payload.id, user_id=user.id)
+        return {"message": "Order cancelled", "status": 204, "data": {}}
     except Exception as ex:
         logger.exception(ex)
         response.status_code = status.HTTP_400_BAD_REQUEST
