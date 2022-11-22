@@ -1,5 +1,3 @@
-from os import environ
-
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -84,8 +82,6 @@ class User(Base):
     book = relationship("Book", back_populates="user")
     cart = relationship("Cart", back_populates="user")
     cartitem = relationship("CartItem", back_populates="user")
-    order = relationship("Order", back_populates="user")
-    orderitem = relationship("OrderItem", back_populates="user")
     objects = Manager()
 
     def __repr__(self):
@@ -108,7 +104,6 @@ class Book(Base):
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="book")
     cartitem = relationship("CartItem", back_populates="book")
-    orderitem = relationship("OrderItem", back_populates="book")
     objects = Manager()
 
     def __repr__(self):
@@ -130,7 +125,6 @@ class Cart(Base):
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cart")
     cartitem = relationship("CartItem", back_populates="cart", cascade="all,delete")
-    order = relationship("Order", back_populates="cart")
     objects = Manager()
 
     def __repr__(self):
@@ -162,43 +156,3 @@ class CartItem(Base):
 
     def to_dict(self):
         return {"id": self.id, "price": self.price, "book_id": self.book_id, "user_id": self.user_id, "cart_id": self.cart_id}
-
-
-class Order(Base):
-    __tablename__ = "order"
-
-    id = Column(BigInteger, primary_key=True, index=True)
-    total_quantity = Column(Integer, default=0)
-    total_price = Column(Integer, default=0)
-    cart_id = Column(BigInteger, ForeignKey("cart.id", ondelete="SET NULL"), nullable=True)
-    cart = relationship("Cart", back_populates="order")
-    user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="order")
-    orderitem = relationship("OrderItem", back_populates="order", cascade="all,delete")
-    objects = Manager()
-
-    def __repr__(self):
-        return f"Order(id={self.id!r})"
-
-    def to_dict(self):
-        return {"id": self.id, "total_quantity": self.total_quantity, "total_price": self.total_price, "cart_id": self.cart_id,
-                "user_id": self.user_id}
-
-
-class OrderItem(Base):
-    __tablename__ = "orderitem"
-
-    id = Column(BigInteger, primary_key=True, index=True)
-    user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="orderitem")
-    book_id = Column(BigInteger, ForeignKey("book.id", ondelete="CASCADE"), nullable=False)
-    book = relationship("Book", back_populates="orderitem")
-    order_id = Column(BigInteger, ForeignKey("order.id", ondelete="CASCADE"), nullable=False)
-    order = relationship("Order", back_populates="orderitem")
-    objects = Manager()
-
-    def __repr__(self):
-        return f"OrderItem(id={self.id!r})"
-
-    def to_dict(self):
-        return {"id": self.id, "user_id": self.user_id, "book_id": self.book_id, "order_id": self.order_id}

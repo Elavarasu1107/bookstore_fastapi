@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from functools import wraps
 
 import jwt
 from fastapi import HTTPException, Request, Response, status
