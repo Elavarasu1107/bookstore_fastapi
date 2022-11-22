@@ -21,7 +21,7 @@ class UserLoginValidator(BaseModel):
 
 
 class BookValidator(BaseModel):
-    id: int
+    id: int|None
     author: str
     title: str
     price: int
@@ -34,13 +34,3 @@ class CartValidator(BaseModel):
     user_id: int|None
     book_id: int
     quantity: int
-
-class CartIdValidator(BaseModel):
-    id: int
-
-
-class OrderItemOutput(BaseModel):
-    id: int
-
-    class Config:
-        orm_mode = True
