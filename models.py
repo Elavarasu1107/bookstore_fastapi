@@ -1,3 +1,5 @@
+from enum import Enum
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -10,12 +12,19 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.orm import Session, declarative_base, relationship
+from sqlalchemy_utils import ChoiceType
 
 from settings import settings
 
 Base = declarative_base()
 engine = create_engine(settings.database_url)
 Base.metadata.create_all(engine)
+
+
+class CartStatus(Enum):
+    cart = "cart"
+    ordered = "ordered"
+    cancelled = "cancelled"
 
 
 class Manager:
@@ -121,7 +130,7 @@ class Cart(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     total_quantity = Column(Integer, default=0)
     total_price = Column(Integer, default=0)
-    status = Column(Boolean, default=False)
+    status = Column(ChoiceType(CartStatus, impl=String(250)), default=CartStatus.cart.value)
     user_id = Column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cart")
     cartitem = relationship("CartItem", back_populates="cart", cascade="all,delete")

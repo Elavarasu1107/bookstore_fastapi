@@ -34,3 +34,7 @@ class CartValidator(BaseModel):
     user_id: int|None
     book_id: int
     quantity: int
+
+class OrderOutput(BaseModel):
+    book_id: int
+    quantity: int
