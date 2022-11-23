@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Response, status
 
 from event_emitter import ee
-from models import Book, Cart, CartItem, User
+from models import Book, Cart, CartItem, CartStatus, User
 from utils import logger, verify_user
 from validators import CartValidator, IdValidator
 
@@ -11,7 +11,7 @@ router = APIRouter()
 def create_cart(request: Request, response: Response, payload: CartValidator, user: User=Depends(verify_user)):
     try:
         payload.user_id = user.id
-        cart = Cart.objects.get_or_none(user_id=payload.user_id, status=False)
+        cart = Cart.objects.get_or_none(user_id=payload.user_id, status=CartStatus.cart.value)
         book = Book.objects.get(id=payload.book_id)
         if not cart:
             cart = Cart.objects.create(user_id=payload.user_id)
@@ -40,7 +40,7 @@ def get_cart(request:Request, response: Response, user: User=Depends(verify_user
 @router.put("/update/", status_code=status.HTTP_201_CREATED)
 def update_cart(request:Request, response: Response, payload: CartValidator, user: User=Depends(verify_user)):
     try:
-        cart = Cart.objects.get(id=payload.id, user_id=user.id, status=False)
+        cart = Cart.objects.get(id=payload.id, user_id=user.id, status=CartStatus.cart.value)
         book = Book.objects.get(id=payload.book_id)
         cartitem = CartItem.objects.filter(cart_id=cart.id, user_id=user.id, book_id=payload.book_id)
         count = payload.quantity - len(cartitem)
