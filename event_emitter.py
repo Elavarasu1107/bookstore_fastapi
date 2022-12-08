@@ -6,23 +6,27 @@ from utils import logger
 
 ee = EventEmitter()
 
+
 @ee.on('error')
 def errors(ex):
     logger.exception(ex)
     raise HTTPException(detail=str(ex), status_code=status.HTTP_400_BAD_REQUEST)
+
 
 @ee.on("add_cart")
 def add_cart(payload, user, book, cart):
     try:
         cartitem_list = []
         for i in range(payload.quantity):
-            cartitem_list.append(CartItem(price=book.price, quantity=1, book_id=book.id, user_id=user.id, cart_id=cart.id))
+            cartitem_list.append(
+                CartItem(price=book.price, quantity=1, book_id=book.id, user_id=user.id, cart_id=cart.id))
             cart.total_price += book.price
         CartItem.objects.bulk_create(cartitem_list)
         cart.total_quantity += payload.quantity
         Cart.objects.update(id=cart.id, total_price=cart.total_price, total_quantity=cart.total_quantity)
     except Exception as ex:
         ee.emit('error', ex)
+
 
 @ee.on("update_cart")
 def update_cart(cart, user, book, cart_item, count):
@@ -46,4 +50,3 @@ def update_cart(cart, user, book, cart_item, count):
             cart.objects.update(id=cart.id, total_price=total_price, total_quantity=total_quantity)
     except Exception as ex:
         ee.emit('error', ex)
-        

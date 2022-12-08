@@ -6,6 +6,7 @@ from validators import UserLoginValidator, UserValidator
 
 router = APIRouter()
 
+
 @router.post("/create/")
 def user_register(payload: UserValidator, response: Response):
     """

@@ -7,8 +7,9 @@ from validators import CartValidator, IdValidator
 
 router = APIRouter()
 
+
 @router.post("/create/", status_code=status.HTTP_201_CREATED)
-def create_cart(request: Request, response: Response, payload: CartValidator, user: User=Depends(verify_user)):
+def create_cart(request: Request, response: Response, payload: CartValidator, user: User = Depends(verify_user)):
     try:
         payload.user_id = user.id
         cart = Cart.objects.get_or_none(user_id=payload.user_id, status=CartStatus.cart.value)
@@ -26,7 +27,7 @@ def create_cart(request: Request, response: Response, payload: CartValidator, us
 
 
 @router.get("/get/", status_code=status.HTTP_200_OK)
-def get_cart(request:Request, response: Response, user: User=Depends(verify_user)):
+def get_cart(request: Request, response: Response, user: User = Depends(verify_user)):
     try:
         carts = CartItem.objects.filter(user_id=user.id)
         data = [items.to_dict() for items in carts]
@@ -38,7 +39,7 @@ def get_cart(request:Request, response: Response, user: User=Depends(verify_user
 
 
 @router.put("/update/", status_code=status.HTTP_201_CREATED)
-def update_cart(request:Request, response: Response, payload: CartValidator, user: User=Depends(verify_user)):
+def update_cart(request: Request, response: Response, payload: CartValidator, user: User = Depends(verify_user)):
     try:
         cart = Cart.objects.get(id=payload.id, user_id=user.id, status=CartStatus.cart.value)
         book = Book.objects.get(id=payload.book_id)
@@ -53,7 +54,7 @@ def update_cart(request:Request, response: Response, payload: CartValidator, use
 
 
 @router.delete("/delete/", status_code=status.HTTP_204_NO_CONTENT)
-def delete_cart(request:Request, response: Response, payload: IdValidator, user: User=Depends(verify_user)):
+def delete_cart(request: Request, response: Response, payload: IdValidator, user: User = Depends(verify_user)):
     try:
         Cart.objects.delete(id=payload.id, user_id=user.id)
         return {"message": "Cart Deleted", "status": 204, "data": {}}

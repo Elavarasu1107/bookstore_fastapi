@@ -32,7 +32,6 @@ class Manager:
         self.model = None
         self.session = Session(engine)
 
-
     def create(self, **payload):
         instance = self.model(**payload)
         self.session.add(instance)
@@ -76,6 +75,7 @@ class Manager:
     def __set_name__(self, owner, name):
         self.model = owner
 
+
 class User(Base):
     __tablename__ = "user"
 
@@ -96,7 +96,6 @@ class User(Base):
     def __repr__(self):
         return f"User(id={self.id!r})"
 
-    
     def to_dict(self):
         return {"id": self.id, "username": self.username, "first_name": self.first_name, "last_name": self.last_name,
                 "email": self.email, "phone": self.phone, "location": self.location}
@@ -118,7 +117,6 @@ class Book(Base):
     def __repr__(self):
         return f"Book(id={self.id!r})"
 
-
     def to_dict(self):
         return {"id": self.id, "author": self.author, "title": self.title, "price": self.price,
                 "quantity": self.quantity, "user": self.user_id}
@@ -139,9 +137,9 @@ class Cart(Base):
     def __repr__(self):
         return f"Cart(id={self.id!r})"
 
-
     def to_dict(self):
-        return {"id": self.id, "total_quantity": self.total_quantity, "total_price": self.total_price, "status": self.status,
+        return {"id": self.id, "total_quantity": self.total_quantity, "total_price": self.total_price,
+                "status": self.status,
                 "user_id": self.user_id}
 
 
@@ -162,6 +160,6 @@ class CartItem(Base):
     def __repr__(self):
         return f"CartItem(id={self.id!r})"
 
-
     def to_dict(self):
-        return {"id": self.id, "price": self.price, "book_id": self.book_id, "user_id": self.user_id, "cart_id": self.cart_id}
+        return {"id": self.id, "price": self.price, "book_id": self.book_id, "user_id": self.user_id,
+                "cart_id": self.cart_id}

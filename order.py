@@ -6,8 +6,9 @@ from validators import IdValidator, OrderOutput
 
 router = APIRouter()
 
+
 @router.post("/create/", status_code=status.HTTP_201_CREATED)
-def create_order(request:Request, response: Response, payload: IdValidator, user: User=Depends(verify_user)):
+def create_order(request: Request, response: Response, payload: IdValidator, user: User = Depends(verify_user)):
     try:
         cart = Cart.objects.get_or_none(id=payload.id, user_id=user.id, status=CartStatus.cart.value)
         if cart:
@@ -19,8 +20,9 @@ def create_order(request:Request, response: Response, payload: IdValidator, user
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message": str(ex), "status": 400, "data": {}}
 
+
 @router.get("/get/", status_code=status.HTTP_200_OK)
-def create_order(request:Request, response: Response, user: User=Depends(verify_user)):
+def create_order(request: Request, response: Response, user: User = Depends(verify_user)):
     try:
         data = []
         carts = Cart.objects.filter(user_id=user.id, status=CartStatus.ordered.value)
@@ -40,7 +42,7 @@ def create_order(request:Request, response: Response, user: User=Depends(verify_
 
 
 @router.delete("/delete/", status_code=status.HTTP_205_RESET_CONTENT)
-def create_order(request:Request, response: Response, payload: IdValidator, user: User=Depends(verify_user)):
+def create_order(request: Request, response: Response, payload: IdValidator, user: User = Depends(verify_user)):
     try:
         cart = Cart.objects.get_or_none(id=payload.id, user_id=user.id, status=CartStatus.ordered.value)
         if cart:

@@ -7,6 +7,9 @@ from fastapi import HTTPException, Request, Response, status
 
 from models import User
 from settings import settings
+from dagster import asset
+
+from validators import BookValidator
 
 logging.basicConfig(filename='book_store.log', encoding='utf-8', level=logging.DEBUG,
                     format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -53,6 +56,21 @@ class JWT:
             logger.exception(ex)
 
 
+@asset
+def request():
+    return Request
+
+
+@asset
+def response():
+    return Response
+
+
+@asset
+def payload():
+    return BookValidator
+
+
 def get_user(request):
     token = request.headers.get("token")
     if not token:
@@ -66,11 +84,13 @@ def get_user(request):
     return user
 
 
+@asset
+def verify_user(request):
+    return get_user(request)
 
-def verify_user(request: Request)-> User:
-        return get_user(request)
 
-def verify_superuser(request: Request)-> User:
+@asset
+def verify_superuser(request):
     user = get_user(request)
     if not user.is_superuser:
         raise HTTPException(detail='User not authorized', status_code=404)
