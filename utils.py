@@ -56,41 +56,24 @@ class JWT:
             logger.exception(ex)
 
 
-@asset
-def request():
-    return Request
-
-
-@asset
-def response():
-    return Response
-
-
-@asset
-def payload():
-    return BookValidator
-
-
 def get_user(request):
     token = request.headers.get("token")
     if not token:
-        raise HTTPException(detail='Auth token required', status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(detail='Auth token required', status_code=status.HTTP_401_UNAUTHORIZED)
     decode = JWT().decode(token)
     if decode.get('role') != TokenRole.auth.value:
-        raise HTTPException(detail='Invalid Token Role', status_code=status.HTTP_406_NOT_ACCEPTABLE)
+        raise HTTPException(detail='Invalid Token Role', status_code=status.HTTP_401_UNAUTHORIZED)
     user = User.objects.get(id=decode.get('user_id'))
     if not user:
         raise HTTPException(detail='User not found', status_code=404)
     return user
 
 
-@asset
-def verify_user(request):
+def verify_user(request: Request):
     return get_user(request)
 
 
-@asset
-def verify_superuser(request):
+def verify_superuser(request: Request):
     user = get_user(request)
     if not user.is_superuser:
         raise HTTPException(detail='User not authorized', status_code=404)

@@ -1,18 +1,16 @@
 from fastapi import APIRouter, Depends, Request, Response, status
 
 from models import Book, User
-from utils import logger, verify_superuser, get_user, response, payload, request, verify_user
-# from utils import logger, verify_user, verify_superuser
+from utils import logger, verify_superuser, verify_user
 from validators import BookValidator, IdValidator
-from dagster import asset
 
 router = APIRouter()
 
-@asset
+
 @router.post('/create/', status_code=status.HTTP_201_CREATED)
-def create_note(payload, response, verify_superuser):
+def create_note(payload: BookValidator, response: Response, user: User = Depends(verify_superuser)):
     try:
-        payload.user_id = verify_superuser.id
+        payload.user_id = user.id
         book = Book.objects.create(**payload.dict())
         return {"message": "Book Added", "status": 201, "data": book.to_dict()}
     except Exception as ex:
@@ -22,7 +20,7 @@ def create_note(payload, response, verify_superuser):
 
 
 @router.get('/get/', status_code=status.HTTP_200_OK)
-def get_note(request: Request, response: Response, user: User=Depends(verify_user)):
+def get_note(request: Request, response: Response, user: User = Depends(verify_user)):
     try:
         books = Book.objects.all()
         data = [book.to_dict() for book in books]

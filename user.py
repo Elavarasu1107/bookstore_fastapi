@@ -7,7 +7,7 @@ from validators import UserLoginValidator, UserValidator
 router = APIRouter()
 
 
-@router.post("/create/")
+@router.post("/register/")
 def user_register(payload: UserValidator, response: Response):
     """
     This function registers user to the database
