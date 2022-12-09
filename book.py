@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.post('/create/', status_code=status.HTTP_201_CREATED)
-def create_note(payload: BookValidator, response: Response, user: User = Depends(verify_superuser)):
+def create_book(payload: BookValidator, response: Response, user: User = Depends(verify_superuser)) -> dict:
     try:
         payload.user_id = user.id
         book = Book.objects.create(**payload.dict())
@@ -20,7 +20,7 @@ def create_note(payload: BookValidator, response: Response, user: User = Depends
 
 
 @router.get('/get/', status_code=status.HTTP_200_OK)
-def get_note(request: Request, response: Response, user: User = Depends(verify_user)):
+def get_book(request: Request, response: Response, user: User = Depends(verify_user)) -> dict:
     try:
         books = Book.objects.all()
         data = [book.to_dict() for book in books]
@@ -32,7 +32,7 @@ def get_note(request: Request, response: Response, user: User = Depends(verify_u
 
 
 @router.put('/update/', status_code=status.HTTP_201_CREATED)
-def update_note(payload: BookValidator, response: Response, user: User = Depends(verify_superuser)):
+def update_book(payload: BookValidator, response: Response, user: User = Depends(verify_superuser)) -> dict:
     try:
         payload.user_id = user.id
         book = Book.objects.update(**payload.dict())
@@ -44,9 +44,9 @@ def update_note(payload: BookValidator, response: Response, user: User = Depends
 
 
 @router.delete('/delete/', status_code=status.HTTP_204_NO_CONTENT)
-def delete_note(payload: IdValidator, response: Response, user: User = Depends(verify_superuser)):
+def delete_book(payload: IdValidator, response: Response, user: User = Depends(verify_superuser)) -> dict:
     try:
-        payload.id = user.id
+        payload.user_id = user.id
         Book.objects.delete(**payload.dict())
         return {"message": "Book Deleted", "status": 204, "data": {}}
     except Exception as ex:

@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 
 class IdValidator(BaseModel):
     id: int
+    user_id: int | None
 
 
 class UserValidator(BaseModel):

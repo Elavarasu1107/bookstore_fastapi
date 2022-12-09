@@ -14,6 +14,7 @@ def user_register(payload: UserValidator, response: Response):
     """
     try:
         user = User.objects.create(**payload.dict())
+        response.status_code = status.HTTP_201_CREATED
         return {"message": "User Registered", "status": 201, "data": user.to_dict()}
     except Exception as ex:
         logger.exception(ex)
@@ -27,6 +28,7 @@ def user_login(payload: UserLoginValidator, response: Response):
         user = User.objects.get_or_none(**payload.dict())
         if user:
             token = JWT().encode({"user_id": user.id, "role": TokenRole.auth.value})
+            response.status_code = status.HTTP_202_ACCEPTED
             return {"message": "Login Successful", "status": 202, "data": token}
         response.status_code = status.HTTP_406_NOT_ACCEPTABLE
         return {"message": "Invalid Credentials", "status": 406, "data": {}}
